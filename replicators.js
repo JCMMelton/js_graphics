@@ -264,7 +264,6 @@ Cell.prototype.state = function(){
 		};
 	};
 };
-
 player2 = new player('player2');
 player2.spawn(15,15);
 player2.spawn(15,16);
@@ -369,7 +368,6 @@ function generate(){
 		if(cells[b].grown && cells[b].vital){
 			if(!is_occ(game_board,loc_x+1,loc_y) && is_occ(game_board,loc_x+2,loc_y)){
 				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x+1,loc_y-1)){
-				// if((is_occ(game_board,loc_x+1,loc_y+1) && (is_occ(game_board,loc_x+1,loc_y+1)!=null))||(is_occ(game_board,loc_x+1,loc_y-1 && (is_occ(game_board,loc_x+1,loc_y+1)!=null)))){
 					if(find_box(loc_x+2,loc_y).grown && (find_box(loc_x+1,loc_y+1).grown || find_box(loc_x+1,loc_y-1).grown)){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x+1,loc_y);
@@ -383,7 +381,6 @@ function generate(){
 			};
 			if(!is_occ(game_board,loc_x-1,loc_y) && is_occ(game_board,loc_x-2,loc_y)){
 				if(is_occ(game_board,loc_x-1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y-1)){
-				// if((is_occ(game_board,loc_x-1,loc_y+1) && (is_occ(game_board,loc_x-1,loc_y+1)!=null))||(is_occ(game_board,loc_x-1,loc_y-1 && (is_occ(game_board,loc_x-1,loc_y-1)!=null)))){
 					if(find_box(loc_x-2,loc_y).grown && (find_box(loc_x-1,loc_y+1).grown || find_box(loc_x-1,loc_y-1).grown)){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x-1,loc_y);
@@ -397,7 +394,6 @@ function generate(){
 			};
 			if(!is_occ(game_board,loc_x,loc_y+1) && is_occ(game_board,loc_x,loc_y+2)){
 				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y+1)){
-				// if((is_occ(game_board,loc_x+1,loc_y+1) && (is_occ(game_board,loc_x-1,loc_y+1)!=null))||(is_occ(game_board,loc_x-1,loc_y+1 && (is_occ(game_board,loc_x-1,loc_y+1)!=null)))){
 					if(find_box(loc_x,loc_y+2).grown && (find_box(loc_x-1,loc_y+1).grown || find_box(loc_x+1,loc_y+1).grown)){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x,loc_y+1);
@@ -411,7 +407,6 @@ function generate(){
 			};
 			if(!is_occ(game_board,loc_x,loc_y-1) && is_occ(game_board,loc_x,loc_y-2)){
 				if(is_occ(game_board,loc_x+1,loc_y-1) || is_occ(game_board,loc_x-1,loc_y-1)){
-				// if((is_occ(game_board,loc_x+1,loc_y-1) && (is_occ(game_board,loc_x+1,loc_y-1)!=null))||(is_occ(game_board,loc_x-1,loc_y-1 && (is_occ(game_board,loc_x-1,loc_y-1)!=null)))){
 					if(find_box(loc_x,loc_y-2).grown && (find_box(loc_x+1,loc_y-1).grown || find_box(loc_x-1,loc_y-1).grown)){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x,loc_y-1);
