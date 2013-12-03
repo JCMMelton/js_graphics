@@ -1,0 +1,40 @@
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="replicators.js"></script>
+	<script type="text/javascript">
+		window.onload = function(){
+			setInterval(drag, 50);
+			// init();
+		};
+	</script>
+	<style>
+		div{
+			display: inline-block;
+			vertical-align: top;
+		}
+		button{
+			height: 50px;
+			width: 100px;
+		}
+	</style>
+</head>
+<body>
+	<div>
+		<canvas id="canvas1"></canvas>
+	</div>
+	<div>
+		<button onclick="end_turn()">End Turn</button>
+		<p><span id="disp_controller">player1</span>'s turn</p>
+	</div>
+	<h3>Rules</h5>
+	<p>#1: Cells can move once per turn.</p>
+	<p>#2: Cells can move in one of two ways.</p>
+	<ol>
+		<li>Any cell can move diagonally into an adjacent unoccupied space.</li>
+		<li>Cells can move orthoganally if they are next to a friendly cell in that direction, this will push all cells in that row one space.</li>
+	</ol>
+	<p>#3: Any unoccupied space with at least three adjacent friendly cells will generate a 'seed' that will grow into a new cell after three turns.</p>
+	<p>#4: Moving one of your cells into a space occupied by an enemey cell will destroy both cells.</p>
+</body>
+</html>
