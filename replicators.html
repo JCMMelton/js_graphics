@@ -5,7 +5,6 @@
 	<script type="text/javascript">
 		window.onload = function(){
 			setInterval(drag, 50);
-			// init();
 		};
 	</script>
 	<style>
@@ -25,16 +24,21 @@
 	</div>
 	<div>
 		<button onclick="end_turn()">End Turn</button>
+		<p>Turn: <span id="disp_turn">1</span></p>
 		<p><span id="disp_controller">player1</span>'s turn</p>
 	</div>
-	<h3>Rules</h5>
-	<p>#1: Cells can move once per turn.</p>
-	<p>#2: Cells can move in one of two ways.</p>
-	<ol>
-		<li>Any cell can move diagonally into an adjacent unoccupied space.</li>
-		<li>Cells can move orthoganally if they are next to a friendly cell in that direction, this will push all cells in that row one space.</li>
-	</ol>
-	<p>#3: Any unoccupied space with at least three adjacent friendly cells will generate a 'seed' that will grow into a new cell after three turns.</p>
-	<p>#4: Moving one of your cells into a space occupied by an enemey cell will destroy both cells.</p>
+	<div>
+		<h3>Rules</h5>
+		<p>#1: Cells can move once per turn.</p>
+		<p>#2: Cells can move in one of two ways.</p>
+		<ol>
+			<li>Any cell can move diagonally into an adjacent unoccupied space.</li>
+			<li>Cells can move orthogonally if they are next to a friendly cell in that direction, this will push all cells in that row one space.</li>
+		</ol>
+		<p>#3: Any unoccupied space with at least three orthogonally adjacent friendly cells will generate a 'seed' that will grow into a new cell after three turns.</p>
+		<img src="gen_arr.png" atl="cell generator arrangment" height="100" width="110">
+		<p>#4: Moving one of your cells into a space occupied by an enemey cell will destroy both cells.</p>
+		<p>#5: The game never ends, but one may consider eleminating all enemey cells as achieving 'victory'.</p>
+	</div>
 </body>
 </html>

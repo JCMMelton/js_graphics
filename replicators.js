@@ -1,4 +1,4 @@
-var unit = 25;
+var unit = Math.round(window.innerHeight*0.05);
 var picked_up = false;
 var half_space = unit/2;
 var far_edge = (unit*16)-half_space;
@@ -88,11 +88,12 @@ Cell.prototype.grow = function(){
 	this.grown = true;
 };
 Cell.prototype.annihilate = function(target_cell){
+	console.log(this,target_cell);
 	if(this.owner == 'player1'){
-		player2.cells.splice(player2.cells.indexOf(target_cell.owner),1);
+		player2.cells.splice(player2.cells.indexOf(target_cell),1);
 		player1.cells.splice(player1.cells.indexOf(this),1);
 	}else{
-		player1.cells.splice(player1.cells.indexOf(target_cell.owner),1);
+		player1.cells.splice(player1.cells.indexOf(target_cell),1);
 		player2.cells.splice(player2.cells.indexOf(this),1);
 	};
 };
@@ -108,7 +109,7 @@ Cell.prototype.lat_move = function(shift_x,shift_y){
 	if(is_occ(game_board,lx,ly)){
 		if(find_box(lx,ly).owner != this.owner){
 			this.annihilate(find_box(lx,ly));
-		}else{
+		}else if(find_box(lx,ly).grown){
 			find_box(lx,ly).lat_move(shift_x,shift_y);
 		};
 	};
@@ -124,52 +125,68 @@ Cell.prototype.move = function(mx,my){
 				this.origin.x -= unit;
 				this.origin.y -= unit;
 				this.moves = 0;
+				this.vital = 0;
 			}else if(find_box(this.location.x-1,this.location.y-1).owner != this.owner){
 				this.annihilate(find_box(this.location.x-1,this.location.y-1));
+				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
+		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
 			if(!is_occ(game_board,this.location.x+1,this.location.y-1)){
 				this.origin.x += unit;
 				this.origin.y -= unit;
 				this.moves = 0;
+				this.vital = 0;
 			}else if(find_box(this.location.x+1,this.location.y-1).owner != this.owner){
 				this.annihilate(find_box(this.location.x+1,this.location.y-1));
+				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
+		}else if(this.moves && (is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
 			if(!is_occ(game_board,this.location.x-1,this.location.y+1)){
 				this.origin.x -= unit;
 				this.origin.y += unit;
 				this.moves = 0;
+				this.vital = 0;
 			}else if(find_box(this.location.x-1,this.location.y+1).owner != this.owner){
 				this.annihilate(find_box(this.location.x-1,this.location.y+1));
+				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
+		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
 			if(!is_occ(game_board,this.location.x+1,this.location.y+1)){
 				this.origin.x += unit;
 				this.origin.y += unit;
 				this.moves = 0;
+				this.vital = 0;
 			}else if(find_box(this.location.x+1,this.location.y+1).owner != this.owner){
 				this.annihilate(find_box(this.location.x+1,this.location.y+1));
+				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x+1,this.location.y)){
+		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
+			if(is_occ(game_board,this.location.x+1,this.location.y)&& find_box(this.location.x+1,this.location.y).grown){
 				this.lat_move(1,0);
 				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x-1,this.location.y)){
+		}else if(this.moves && (is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
+			if(is_occ(game_board,this.location.x-1,this.location.y)&& find_box(this.location.x-1,this.location.y).grown){
 				this.lat_move(-1,0);
 				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x,this.location.y+1)){
+		}else if(this.moves && (is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
+			if(is_occ(game_board,this.location.x,this.location.y+1)&& find_box(this.location.x,this.location.y+1).grown){
 				this.lat_move(0,1);
 				this.moves = 0;
+				this.vital = 0;
 			};
-		}else if((is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
-			if(is_occ(game_board,this.location.x,this.location.y-1)){
+		}else if(this.moves && (is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
+			if(is_occ(game_board,this.location.x,this.location.y-1)&& find_box(this.location.x,this.location.y-1).grown){
 				this.lat_move(0,-1);
 				this.moves = 0;
+				this.vital = 0;
 			};
 		};
 	};
@@ -269,11 +286,19 @@ player2.spawn(15,15);
 player2.spawn(15,16);
 player2.spawn(16,15);
 player2.spawn(16,16);
+// player2.spawn(9,9);
+// player2.spawn(9,8);
+// player2.spawn(8,9);
+// player2.spawn(8,8);
 player1 = new player('player1');
 player1.spawn(2,2);
 player1.spawn(1,2);
 player1.spawn(2,1);
 player1.spawn(1,1);
+// player1.spawn(7,7);
+// player1.spawn(6,7);
+// player1.spawn(7,6);
+// player1.spawn(6,6);
 for(box in player1.cells){
 	player1.cells[box].grow();
 	player2.cells[box].grow();
@@ -339,25 +364,31 @@ function end_turn(){
 	turn++;
 	if(turn%2==0){
 		for(c in player1.cells){
-			player2.cells[c].moves = 1;
-			player2.cells[c].vital = 1;
 			player1.cells[c].age++;
 			if(player1.cells[c].age>3 && !player1.cells[c].grown){
 				player1.cells[c].grow();
 			};
 		};
+		for(c in player2.cells){
+			player2.cells[c].moves = 1;
+			player2.cells[c].vital = 1;
+		};
 		controller = 'player2';
 	}else{
 		for(c in player2.cells){
-			player1.cells[c].moves = 1;
-			player1.cells[c].vital = 1;
 			player2.cells[c].age++;
 			if(player2.cells[c].age>3 && !player2.cells[c].grown){
 				player2.cells[c].grow();
 			};
+			for(c in player1.cells){
+				player1.cells[c].moves = 1;
+				player1.cells[c].vital = 1;
+			};
 		};
 		controller = 'player1';
 	};
+	bage();
+	document.getElementById("disp_turn").innerHTML = turn;
 	document.getElementById("disp_controller").innerHTML = controller;
 };
 function generate(){
@@ -366,55 +397,59 @@ function generate(){
 		loc_x = cells[b].location.x;
 		loc_y = cells[b].location.y;
 		if(cells[b].grown && cells[b].vital){
-			if(!is_occ(game_board,loc_x+1,loc_y) && is_occ(game_board,loc_x+2,loc_y)){
+			if(!is_occ(game_board,loc_x+1,loc_y) && is_occ(game_board,loc_x+2,loc_y) && find_box(loc_x+2,loc_y).owner == cells[b].owner){
 				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x+1,loc_y-1)){
-					if(find_box(loc_x+2,loc_y).grown && (find_box(loc_x+1,loc_y+1).grown || find_box(loc_x+1,loc_y-1).grown)){
+					var pos1 = find_box(loc_x+1,loc_y+1);
+					var pos2 = find_box(loc_x+1,loc_y-1);
+					if(find_box(loc_x+2,loc_y).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x+1,loc_y);
 						}else if(cells[b].owner == 'player2'){
 							player2.spawn(loc_x+1,loc_y);
 						};
 						cells[b].vital = 0;
-						break;
 					};
 				};
 			};
-			if(!is_occ(game_board,loc_x-1,loc_y) && is_occ(game_board,loc_x-2,loc_y)){
+			if(!is_occ(game_board,loc_x-1,loc_y) && is_occ(game_board,loc_x-2,loc_y) && find_box(loc_x-2,loc_y).owner == cells[b].owner){
 				if(is_occ(game_board,loc_x-1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y-1)){
-					if(find_box(loc_x-2,loc_y).grown && (find_box(loc_x-1,loc_y+1).grown || find_box(loc_x-1,loc_y-1).grown)){
+					var pos1 = find_box(loc_x-1,loc_y+1);
+					var pos2 = find_box(loc_x-1,loc_y-1);
+					if(find_box(loc_x-2,loc_y).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x-1,loc_y);
 						}else if(cells[b].owner == 'player2'){
 							player2.spawn(loc_x-1,loc_y);
 						};
 						cells[b].vital = 0;
-						break;
 					};
 				};
 			};
-			if(!is_occ(game_board,loc_x,loc_y+1) && is_occ(game_board,loc_x,loc_y+2)){
+			if(!is_occ(game_board,loc_x,loc_y+1) && is_occ(game_board,loc_x,loc_y+2) && find_box(loc_x,loc_y+2).owner == cells[b].owner){
 				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y+1)){
-					if(find_box(loc_x,loc_y+2).grown && (find_box(loc_x-1,loc_y+1).grown || find_box(loc_x+1,loc_y+1).grown)){
+					var pos1 = find_box(loc_x-1,loc_y+1);
+					var pos2 = find_box(loc_x+1,loc_y+1);
+					if(find_box(loc_x,loc_y+2).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x,loc_y+1);
 						}else if(cells[b].owner == 'player2'){
 							player2.spawn(loc_x,loc_y+1);
 						};
 						cells[b].vital = 0;
-						break;
 					};
 				};
 			};
-			if(!is_occ(game_board,loc_x,loc_y-1) && is_occ(game_board,loc_x,loc_y-2)){
+			if(!is_occ(game_board,loc_x,loc_y-1) && is_occ(game_board,loc_x,loc_y-2) && find_box(loc_x,loc_y-2).owner == cells[b].owner){
 				if(is_occ(game_board,loc_x+1,loc_y-1) || is_occ(game_board,loc_x-1,loc_y-1)){
-					if(find_box(loc_x,loc_y-2).grown && (find_box(loc_x+1,loc_y-1).grown || find_box(loc_x-1,loc_y-1).grown)){
+					var pos1 = find_box(loc_x+1,loc_y-1);
+					var pos2 = find_box(loc_x-1,loc_y-1);
+					if(find_box(loc_x,loc_y-2).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
 						if(cells[b].owner == 'player1'){
 							player1.spawn(loc_x,loc_y-1);
 						}else if(cells[b].owner == 'player2'){
 							player2.spawn(loc_x,loc_y-1);
 						};
 						cells[b].vital = 0;
-						break;
 					};
 				};
 			};
@@ -472,7 +507,32 @@ function find_box(x_co,y_co){
 	};
 	return false; 
 };
-
+function bage(){
+	pl1 = player1.cells;
+	for(p1 in pl1){
+		for(pp1 in pl1){
+			if(pl1[p1].location.x == pl1[pp1].location.x && pl1[p1].location.y == pl1[pp1].location.y && pl1[p1].id != pl1[pp1].id){
+				if(p1>pp1){
+					player1.cells.splice(p1,1);
+				}else{
+					player1.cells.splice(pp1,1);
+				};
+			};	
+		};
+	};
+	pl2 = player2.cells;
+	for(p1 in pl2){
+		for(pp1 in pl2){
+			if(pl2[p1].location.x == pl2[pp1].location.x && pl2[p1].location.y == pl2[pp1].location.y && pl2[p1].id != pl2[pp1].id){
+				if(p1>pp1){
+					player2.cells.splice(p1,1);
+				}else{
+					player2.cells.splice(pp1,1);
+				};
+			};	
+		};
+	};
+};
 
 
 
