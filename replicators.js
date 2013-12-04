@@ -267,9 +267,29 @@ Cell.prototype.scan = function(){
 	return res;
 };
 Cell.prototype.state = function(){
-	if(!this.moves || !this.vital){
+	if(this.age<3){
+		if(this.age==0){
+			if(this.owner == 'player1'){
+				this.color = "#8060c0";
+			}else{
+				this.color = "#7FA708";//c0c030
+			};
+		}else if(this.age==1){
+			if(this.owner == 'player1'){
+				this.color = "#7050a0";
+			}else{
+				this.color = "#c07030";
+			};
+		}else{
+			if(this.owner == 'player1'){
+				this.color = "#402080";
+			}else{
+				this.color = "#A76D08";
+			};
+		};
+	}else if(!this.moves || !this.vital){
 		if(this.owner == 'player1'){
-			this.color = "#402080";
+			this.color = "#208062";
 		}else{
 			this.color = "#802040";
 		};
@@ -300,6 +320,8 @@ player1.spawn(1,1);
 // player1.spawn(7,6);
 // player1.spawn(6,6);
 for(box in player1.cells){
+	player1.cells[box].age = 3;
+	player2.cells[box].age = 3;
 	player1.cells[box].grow();
 	player2.cells[box].grow();
 };
