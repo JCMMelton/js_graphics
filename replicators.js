@@ -1,14 +1,19 @@
 var unit = Math.round(window.innerHeight*0.05);
 var picked_up = false;
 var half_space = unit/2;
+var frac = unit*.2;
+var	pf = unit*.5;
+var	of = unit*1.5;
+var tu = unit*2;
 var far_edge = (unit*16)-half_space;
 var game_board = [];
 var turn = 1;
 var controller = 'player1';
-function all_cells(){
+var ini = false;
+function all_cells(){ // returns an array with the cells for both players 
 	return player1.cells.concat(player2.cells);
 };
-function draw_grid(can){
+function draw_grid(can){ // renders the game grid
 	for(var i=0;i<17;i++){
 		can.moveTo(i*unit,0);
 		can.lineTo(i*unit,16*unit);
@@ -16,14 +21,14 @@ function draw_grid(can){
 		can.lineTo(16*unit,i*unit);
 	};
 };
-function draw_box(box,can,color,dim){
+function draw_box(box,can,color,dim){ // renders a rectangle based on passed parameters
 	corns = box.corners();
 	tcorn_x = corns[0][0];
 	tcorn_y = corns[0][1];
 	can.fillStyle = color;
 	can.fillRect(tcorn_x,tcorn_y,dim,dim);
 };
-function disp_move(x,y,can,direction){
+function disp_move(x,y,can,direction){ // displays orthogonal moves for the player
 	if(direction == 'diag'){
 		can.fillStyle = "#808080";
 		can.fillRect(x+unit*.05,y+unit*.05,unit*.9,unit*.9);		
@@ -35,7 +40,7 @@ function disp_move(x,y,can,direction){
 		can.fillRect(x+unit*.25,y-unit*.25,unit*.5,unit*1.5);
 	};
 };
-function within(box,mx,my){
+function within(box,mx,my){ // checks if the mouse is within a specific cell
 	boks = box.corners();
 	m_left = boks[0][0];
 	m_right = boks[1][0];
@@ -47,7 +52,7 @@ function within(box,mx,my){
 		return false;
 	};
 };
-function is_between(test,up,lw){
+function is_between(test,up,lw){ // checks if a number is within a given range
 	low = test>lw;
 	hi = test<up;
 	if(low&&hi){
@@ -60,12 +65,12 @@ function player(name){
 	this.name = name;
 	this.cells = [];
 	this.ids = 0;
-	this.spawn = function(x,y){
+	this.spawn = function(x,y){ // creates a new cell for a player object and stores is in the cells array
 		this.cells.push(new Cell(x,y,this.ids++,this.name));
 		return this;
 	};
 };
-function Cell(x,y,id,owner){
+function Cell(x,y,id,owner){ // 
 	this.id = id;
 	this.dim = unit*.4;
 	this.location = {'x':x,'y':y};
@@ -78,7 +83,7 @@ function Cell(x,y,id,owner){
 	this.moves = 1;
 	this.vital = 1;
 };
-Cell.prototype.grow = function(){
+Cell.prototype.grow = function(){ // updates the status of a cell to grown allowing it to move ect.
 	if(this.owner == 'player1'){
 		this.color = "#204080";
 	}else{
@@ -87,8 +92,7 @@ Cell.prototype.grow = function(){
 	this.dim = unit*.8;
 	this.grown = true;
 };
-Cell.prototype.annihilate = function(target_cell){
-	console.log(this,target_cell);
+Cell.prototype.annihilate = function(target_cell){ // destroys two cells 
 	if(this.owner == 'player1'){
 		player2.cells.splice(player2.cells.indexOf(target_cell),1);
 		player1.cells.splice(player1.cells.indexOf(this),1);
@@ -97,13 +101,12 @@ Cell.prototype.annihilate = function(target_cell){
 		player2.cells.splice(player2.cells.indexOf(this),1);
 	};
 };
-Cell.prototype.move_anchor = function(){
-	this.anchor.x = this.origin.x;
-	this.anchor.y = this.origin.y;
+Cell.prototype.move_anchor = function(){ // updates the positional data for the cell
+	this.anchor = this.origin;
 	this.location.x = Math.round(this.origin.x/unit);
 	this.location.y = Math.round(this.origin.y/unit);
 };
-Cell.prototype.lat_move = function(shift_x,shift_y){
+Cell.prototype.lat_move = function(shift_x,shift_y){ // performs a lateral shift on all adjacent cells
 	lx = this.location.x+shift_x;
 	ly = this.location.y+shift_y;
 	if(is_occ(game_board,lx,ly)){
@@ -117,88 +120,52 @@ Cell.prototype.lat_move = function(shift_x,shift_y){
 	this.origin.y += unit*shift_y;
 	this.move_anchor();
 };
-Cell.prototype.move = function(mx,my){
-	frac = unit*.2;
-	if(this.moves){
-		if((is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
-			if(!is_occ(game_board,this.location.x-1,this.location.y-1)){
-				this.origin.x -= unit;
-				this.origin.y -= unit;
-				this.moves = 0;
-				this.vital = 0;
-			}else if(find_box(this.location.x-1,this.location.y-1).owner != this.owner){
-				this.annihilate(find_box(this.location.x-1,this.location.y-1));
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
-			if(!is_occ(game_board,this.location.x+1,this.location.y-1)){
-				this.origin.x += unit;
-				this.origin.y -= unit;
-				this.moves = 0;
-				this.vital = 0;
-			}else if(find_box(this.location.x+1,this.location.y-1).owner != this.owner){
-				this.annihilate(find_box(this.location.x+1,this.location.y-1));
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
-			if(!is_occ(game_board,this.location.x-1,this.location.y+1)){
-				this.origin.x -= unit;
-				this.origin.y += unit;
-				this.moves = 0;
-				this.vital = 0;
-			}else if(find_box(this.location.x-1,this.location.y+1).owner != this.owner){
-				this.annihilate(find_box(this.location.x-1,this.location.y+1));
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
-			if(!is_occ(game_board,this.location.x+1,this.location.y+1)){
-				this.origin.x += unit;
-				this.origin.y += unit;
-				this.moves = 0;
-				this.vital = 0;
-			}else if(find_box(this.location.x+1,this.location.y+1).owner != this.owner){
-				this.annihilate(find_box(this.location.x+1,this.location.y+1));
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x+(unit*1.5)-frac,this.origin.x+(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x+1,this.location.y)&& find_box(this.location.x+1,this.location.y).grown){
-				this.lat_move(1,0);
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x-(unit*.5)-frac,this.origin.x-(unit*1.5)+frac))&&(is_between(my,this.origin.y+(unit*.5)-frac,this.origin.y-(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x-1,this.location.y)&& find_box(this.location.x-1,this.location.y).grown){
-				this.lat_move(-1,0);
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y+(unit*1.5)-frac,this.origin.y+(unit*.5)+frac))){
-			if(is_occ(game_board,this.location.x,this.location.y+1)&& find_box(this.location.x,this.location.y+1).grown){
-				this.lat_move(0,1);
-				this.moves = 0;
-				this.vital = 0;
-			};
-		}else if(this.moves && (is_between(mx,this.origin.x+(unit*.5)-frac,this.origin.x-(unit*.5)+frac))&&(is_between(my,this.origin.y-(unit*.5)-frac,this.origin.y-(unit*1.5)+frac))){
-			if(is_occ(game_board,this.location.x,this.location.y-1)&& find_box(this.location.x,this.location.y-1).grown){
-				this.lat_move(0,-1);
-				this.moves = 0;
-				this.vital = 0;
+Cell.prototype.move = function(mx,my){ // checks if player is attempting a legal move and if so performs that move
+	this.clear = function(){
+		this.moves = 0;
+		this.vital = 0;
+	};
+	var co = [ // numerical data for checking move conditions
+			-1*pf-frac, -1*pf+frac, pf+frac, pf-frac,
+			-1*of-frac, -1*of+frac, of+frac, of-frac
+			];
+	var diag = { // data for all diagonal move conditions
+				0:{1:co[0], 2:co[5], 3:co[0], 4:co[5], 5:-1, 6:-1},
+				1:{1:co[7], 2:co[2], 3:co[0], 4:co[5], 5:1,  6:-1},
+				2:{1:co[0], 2:co[5], 3:co[7], 4:co[2], 5:-1, 6:1 },
+				3:{1:co[7], 2:co[2], 3:co[7], 4:co[2], 5:1,  6:1 }
+				};
+	var orth = { // data for all orthogonal move conditions
+				0:{1:co[7], 2:co[2], 3:co[3], 4:co[1], 5:1,  6:0 },
+				1:{1:co[0], 2:co[5], 3:co[3], 4:co[1], 5:-1, 6:0 },
+				2:{1:co[3], 2:co[5], 3:co[7], 4:co[2], 5:0,  6:1 },
+				3:{1:co[3], 2:co[1], 3:co[0], 4:co[5], 5:0,  6:-1}
+				};
+	for(d in diag){ // runs logic for checking all move conditions, compares mouse position with grid spaces adjacent to the cell
+		if(this.moves && (is_between(mx,this.origin.x+diag[d][1],this.origin.x+diag[d][2]))&&(is_between(my,this.origin.y+diag[d][3],this.origin.y+diag[d][4]))){
+			if(!is_occ(game_board,this.location.x+diag[d][5],this.location.y+diag[d][6])){
+				this.origin.x += unit*diag[d][5];
+				this.origin.y += unit*diag[d][6];
+				this.clear();
+			}else if(find_box(this.location.x+diag[d][5],this.location.y+diag[d][6]).owner != this.owner){
+				this.annihilate(find_box(this.location.x+diag[d][5],this.location.y+diag[d][6]));
+				this.clear();
+			};	
+		};	
+		if(this.moves && (is_between(mx,this.origin.x+orth[d][1],this.origin.x+orth[d][2]))&&(is_between(my,this.origin.y+orth[d][3],this.origin.y+orth[d][4]))){	
+			if(is_occ(game_board,this.location.x+orth[d][5],this.location.y+orth[d][6])&& find_box(this.location.x+orth[d][5],this.location.y+orth[d][6]).grown){
+				this.lat_move(1*orth[d][5],1*orth[d][6]);
+				this.clear();
 			};
 		};
 	};
 	this.move_anchor();
 };
-Cell.prototype.corners = function(){
+Cell.prototype.corners = function(){ // returns the corners of a cell based on its origin, used in the draw function
 	hdim = this.dim/2
 	return [[this.origin.x-hdim,this.origin.y-hdim], [this.origin.x+hdim,this.origin.y-hdim], [this.origin.x+hdim,this.origin.y+hdim], [this.origin.x-hdim,this.origin.y+hdim]];
 };
-Cell.prototype.align = function(){
-	var half_space = unit/2;
-	var far_edge = (unit*16)-half_space;
+Cell.prototype.align = function(){ // keeps the cell centered in grid spaces
 	var newx = (Math.round((this.origin.x)/half_space))*half_space;
 	if(newx%unit==0){
 		newx+=half_space;
@@ -221,58 +188,36 @@ Cell.prototype.align = function(){
 	this.origin.x = newx;
 	this.origin.y = newy;
 };
-Cell.prototype.display_moves = function(){
-	if(!is_occ(game_board,this.location.x-1,this.location.y-1)){
-		disp_move(this.anchor.x-1.5*unit,this.anchor.y-1.5*unit,c1,'diag');
-	};
-	if(!is_occ(game_board,this.location.x+1,this.location.y-1)){
-		disp_move(this.anchor.x+.5*unit,this.anchor.y-1.5*unit,c1,'diag');
-	};
-	if(!is_occ(game_board,this.location.x+1,this.location.y+1)){
-		disp_move(this.anchor.x+.5*unit,this.anchor.y+.5*unit,c1,'diag');
-	};
-	if(!is_occ(game_board,this.location.x-1,this.location.y+1)){
-		disp_move(this.anchor.x-1.5*unit,this.anchor.y+.5*unit,c1,'diag');
-	};
-	if(is_occ(game_board,this.location.x+1,this.location.y)){
-		disp_move((this.anchor.x+1),this.anchor.y,c1,'horiz');
-	};
-	if(is_occ(game_board,this.location.x-1,this.location.y)){
-		disp_move((this.anchor.x-1)-unit*2,this.anchor.y,c1,'horiz');
-	};
-	if(is_occ(game_board,this.location.x,this.location.y+1)){
-		disp_move((this.anchor.x)-unit*.5,(this.anchor.y+1)+unit*.5,c1,'lat');
-	};
-	if(is_occ(game_board,this.location.x,this.location.y-1)){
-		disp_move((this.anchor.x)-unit*.5,(this.anchor.y-1)-unit*1.5,c1,'lat');
+Cell.prototype.display_moves = function(){ // shows the player what moves the currently selected cell can legally make
+	diag = { // numerical data for legal diagonal moves to display
+			0:{1:-of, 2:-of, 3:-1, 4:-1},
+			1:{1:pf,  2:-of, 3:1,  4:-1},
+			2:{1:pf,  2:pf,  3:1,  4:1 },
+			3:{1:-of, 2:pf,  3:-1, 4:1 }
+			};
+	orth = { // numerical data for legal orthogonal moves to display
+			0:{1:1,  2:0,  3: 0,   4: 0,   5:'horiz'},
+			1:{1:-1, 2:0,  3: -tu, 4: 0,   5:'horiz'},
+			2:{1:0,  2:1,  3: -pf, 4: pf,  5:'lat'  },
+			3:{1:0,  2:-1, 3: -pf, 4: -of, 5:'lat'  }
+			};
+	for(d in diag){ // runs logic for checking for legal moves to display
+		if(!is_occ(game_board,this.location.x+diag[d][3],this.location.y+diag[d][4])){
+			disp_move(this.anchor.x+diag[d][1],this.anchor.y+diag[d][2],c1,'diag');
+		};
+		if(is_occ(game_board,this.location.x+(1*orth[d][1]),this.location.y+(1*orth[d][2]))){
+			disp_move((this.anchor.x+(1*orth[d][1]))+(1*orth[d][3]),(this.anchor.y+(1*orth[d][2]))+(1*orth[d][4]),c1,orth[d][5]);
+		};
 	};
 	return this;
 };
-Cell.prototype.scan = function(){
-	res = [false,false,false,false];
-	lx = this.location.x;
-	ly = this.location.y;
-	if(is_occ(game_board,lx,ly+1)){
-		res[0] = {'x':0,'y':1};
-	};
-	if(is_occ(game_board,lx+1,ly)){
-		res[1] = {'x':1,'y':0};
-	};
-	if(is_occ(game_board,lx,ly-1)){
-		res[2] = {'x':0,'y':-1};
-	};
-	if(is_occ(game_board,lx-1,ly)){
-		res[3] = {'x':-1,'y':0};
-	};
-	return res;
-};
-Cell.prototype.state = function(){
+Cell.prototype.state = function(){ // keeps track of the age of the cell and sets the appropriate color
 	if(this.age<3){
 		if(this.age==0){
 			if(this.owner == 'player1'){
 				this.color = "#8060c0";
 			}else{
-				this.color = "#7FA708";//c0c030
+				this.color = "#7FA708";
 			};
 		}else if(this.age==1){
 			if(this.owner == 'player1'){
@@ -301,31 +246,27 @@ Cell.prototype.state = function(){
 		};
 	};
 };
-player2 = new player('player2');
-player2.spawn(15,15);
-player2.spawn(15,16);
-player2.spawn(16,15);
-player2.spawn(16,16);
-// player2.spawn(9,9);
-// player2.spawn(9,8);
-// player2.spawn(8,9);
-// player2.spawn(8,8);
-player1 = new player('player1');
-player1.spawn(2,2);
-player1.spawn(1,2);
-player1.spawn(2,1);
-player1.spawn(1,1);
-// player1.spawn(7,7);
-// player1.spawn(6,7);
-// player1.spawn(7,6);
-// player1.spawn(6,6);
-for(box in player1.cells){
-	player1.cells[box].age = 3;
-	player2.cells[box].age = 3;
-	player1.cells[box].grow();
-	player2.cells[box].grow();
+function init(){ // sets initial gamestate 
+	var p = [0,0,1,1];
+	var q = [0,1,0,1];
+	player2 = new player('player2');
+	player1 = new player('player1');
+	for(var i=0;i<4;i++){
+		player2.spawn(15+p[i],15+q[i]);
+		player1.spawn(1+p[i],1+q[i]);
+	};
+	for(box in player1.cells){
+		player1.cells[box].age = 3;
+		player2.cells[box].age = 3;
+		player1.cells[box].grow();
+		player2.cells[box].grow();
+	};
 };
-function drag(){
+function game(){ // main loop running game logic
+	if(!ini){ // runs init function once
+		init();
+		ini = true;
+	};
 	c1 = set_c("canvas1",2);
 	draw_grid(c1);
 	existing = all_cells();
@@ -349,7 +290,7 @@ function drag(){
 			};
 		};
 	};
-	document.onmousedown = function(){
+	document.onmousedown = function(){ // checks if the user has clicked on a cell
 		for(b in existing){
 			target_box = within(existing[b],mx,my);
 			if(target_box && controller == target_box.owner){
@@ -360,19 +301,19 @@ function drag(){
 			};
 		};	
 	};
-	document.onmouseup = function(){
+	document.onmouseup = function(){ // releases the cells targeted by the user
 		picked_up = false;
 	};
-	for(bo in existing){
+	for(bo in existing){ // corrects alignment for all cells and draws them to the canvas
 		existing[bo].align();
 		draw_box(existing[bo],c1,existing[bo].color,existing[bo].dim);
 	};
-	if(picked_up && target_box.moves){
+	if(picked_up && target_box.moves){ // runs move display logic for the selected cell
 		target_box.display_moves();
 	};
 	c1.stroke();
 };
-function set_c(id,lw){
+function set_c(id,lw){ // preps the canvas
 	var can1 = document.getElementById(id);
 	var ca = can1.getContext("2d");
 	ca.canvas.width = unit*16;
@@ -381,7 +322,7 @@ function set_c(id,lw){
 	ca.beginPath();
 	return ca;
 };
-function end_turn(){
+function end_turn(){ // advances the gamestate by one turn
 	generate();
 	turn++;
 	if(turn%2==0){
@@ -410,93 +351,60 @@ function end_turn(){
 		controller = 'player1';
 	};
 	bage();
-	document.getElementById("disp_turn").innerHTML = turn;
+	document.getElementById("disp_turn").innerHTML = Math.round(turn/2);
 	document.getElementById("disp_controller").innerHTML = controller;
 };
-function generate(){
+
+function generate(){ // locate grid spaces that can generate new cells and create new cells
 	cells = all_cells();
+	var n = {
+			0:{1:1,  2:0,  3:1,  4:1,  5:1,  6:-1 },
+         	1:{1:-1, 2:0,  3:-1, 4:1,  5:-1, 6:-1 },
+         	2:{1:0,  2:1,  3:-1, 4:1,  5:1,  6:1  },
+         	3:{1:0,  2:-1, 3:1,  4:-1, 5:-1, 6:-1 }
+			};
 	for(b in cells){
 		loc_x = cells[b].location.x;
 		loc_y = cells[b].location.y;
 		if(cells[b].grown && cells[b].vital){
-			if(!is_occ(game_board,loc_x+1,loc_y) && is_occ(game_board,loc_x+2,loc_y) && find_box(loc_x+2,loc_y).owner == cells[b].owner){
-				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x+1,loc_y-1)){
-					var pos1 = find_box(loc_x+1,loc_y+1);
-					var pos2 = find_box(loc_x+1,loc_y-1);
-					if(find_box(loc_x+2,loc_y).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
-						if(cells[b].owner == 'player1'){
-							player1.spawn(loc_x+1,loc_y);
-						}else if(cells[b].owner == 'player2'){
-							player2.spawn(loc_x+1,loc_y);
+			for(i in n){
+				if(!is_occ(game_board,loc_x+(1*n[i][1]),loc_y+(1*n[i][2])) && is_occ(game_board,loc_x+(2*n[i][1]),loc_y+(2*n[i][2])) && find_box(loc_x+(2*n[i][1]),loc_y+(2*n[i][2])).owner == cells[b].owner){
+					if(is_occ(game_board,loc_x+n[i][3],loc_y+n[i][4]) || is_occ(game_board,loc_x+n[i][5],loc_y+n[i][6])){
+						var pos1 = find_box(loc_x+n[i][3],loc_y+n[i][4]);
+						var pos2 = find_box(loc_x+n[i][5],loc_y+n[i][6]);
+						if(find_box(loc_x+(2*n[i][1]),loc_y+(2*n[i][2])).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
+							if(cells[b].owner == 'player1'){
+								player1.spawn(loc_x+(1*n[i][1]),loc_y+(1*n[i][2]));
+							}else if(cells[b].owner == 'player2'){
+								player2.spawn(loc_x+(1*n[i][1]),loc_y+(1*n[i][2]));
+							};
+							cells[b].vital = 0;
 						};
-						cells[b].vital = 0;
-					};
-				};
-			};
-			if(!is_occ(game_board,loc_x-1,loc_y) && is_occ(game_board,loc_x-2,loc_y) && find_box(loc_x-2,loc_y).owner == cells[b].owner){
-				if(is_occ(game_board,loc_x-1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y-1)){
-					var pos1 = find_box(loc_x-1,loc_y+1);
-					var pos2 = find_box(loc_x-1,loc_y-1);
-					if(find_box(loc_x-2,loc_y).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
-						if(cells[b].owner == 'player1'){
-							player1.spawn(loc_x-1,loc_y);
-						}else if(cells[b].owner == 'player2'){
-							player2.spawn(loc_x-1,loc_y);
-						};
-						cells[b].vital = 0;
-					};
-				};
-			};
-			if(!is_occ(game_board,loc_x,loc_y+1) && is_occ(game_board,loc_x,loc_y+2) && find_box(loc_x,loc_y+2).owner == cells[b].owner){
-				if(is_occ(game_board,loc_x+1,loc_y+1) || is_occ(game_board,loc_x-1,loc_y+1)){
-					var pos1 = find_box(loc_x-1,loc_y+1);
-					var pos2 = find_box(loc_x+1,loc_y+1);
-					if(find_box(loc_x,loc_y+2).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
-						if(cells[b].owner == 'player1'){
-							player1.spawn(loc_x,loc_y+1);
-						}else if(cells[b].owner == 'player2'){
-							player2.spawn(loc_x,loc_y+1);
-						};
-						cells[b].vital = 0;
-					};
-				};
-			};
-			if(!is_occ(game_board,loc_x,loc_y-1) && is_occ(game_board,loc_x,loc_y-2) && find_box(loc_x,loc_y-2).owner == cells[b].owner){
-				if(is_occ(game_board,loc_x+1,loc_y-1) || is_occ(game_board,loc_x-1,loc_y-1)){
-					var pos1 = find_box(loc_x+1,loc_y-1);
-					var pos2 = find_box(loc_x-1,loc_y-1);
-					if(find_box(loc_x,loc_y-2).grown && ((pos1.grown && pos1.owner == cells[b].owner) || (pos2.grown && pos2.owner == cells[b].owner))){
-						if(cells[b].owner == 'player1'){
-							player1.spawn(loc_x,loc_y-1);
-						}else if(cells[b].owner == 'player2'){
-							player2.spawn(loc_x,loc_y-1);
-						};
-						cells[b].vital = 0;
 					};
 				};
 			};
 		};//end of first condition
 	};//end of for loop
 };	
-function board(cells){
-	function mk_board(){
+function board(cells){ // tracks the location of all the cells on the board
+	function mk_board(){ // creates a empty board
 		return {
-				'1':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'2':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'3':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'4':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'5':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'6':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'7':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'8':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'9':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'10':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'11':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'12':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'13':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'14':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'15':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
-				'16':{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				1:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				2:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				3:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				4:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				5:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				6:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				7:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				8:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				9:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				10:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				11:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				12:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				13:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				14:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				15:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
+				16:{'1':0,'2':0,'3':0,'4':0,'5':0,'6':0,'7':0,'8':0,'9':0,'10':0,'11':0,'12':0,'13':0,'14':0,'15':0,'16':0},
 			};
 	};
 	fboard = mk_board();
@@ -508,12 +416,13 @@ function board(cells){
 	};
 	return fboard;
 };
-function is_occ(tb,xx,yy){
-	if(xx<1||xx>16||yy<1||yy>16){
-		return null
-	}else if(tb[xx][yy]){
+function is_occ(tb,xx,yy){ // determines if a specific grid space is occupied or is off the grid
+	if(xx<1||xx>16||yy<1||yy>16){ // return null if space if off the grid
+		console.log(xx,yy);
+		return null;
+	}else if(tb[xx][yy]){ // return true if space is occupied
 		return true;
-	}else{
+	}else{ // return false otherwise
 		return false;
 	};
 };
@@ -529,7 +438,7 @@ function find_box(x_co,y_co){
 	};
 	return false; 
 };
-function bage(){
+function bage(){ // looks for duplicate cells in a single space and elminates them
 	pl1 = player1.cells;
 	for(p1 in pl1){
 		for(pp1 in pl1){
